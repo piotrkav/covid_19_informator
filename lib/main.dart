@@ -1,8 +1,10 @@
+import 'package:covid_19_informator/service/service_locator.dart';
 import 'package:flutter/material.dart';
 
 import 'home.dart';
 
 void main() {
+  setupServiceLocator();
   runApp(MyApp());
 }
 

@@ -20,6 +20,10 @@ dependencies:
   flutter:
     sdk: flutter
   lombok: ^0.0.5
+  http: ^0.12.0+4
+  get_it: ^4.0.1
+
+
 
 
   # The following adds the Cupertino Icons font to your application.

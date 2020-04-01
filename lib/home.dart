@@ -1,3 +1,6 @@
+import 'package:covid_19_informator/model/covid_paginated_data_table_source.dart';
+import 'package:covid_19_informator/service/covid_service.dart';
+import 'package:covid_19_informator/service/service_locator.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 
@@ -20,17 +23,19 @@ class MyHomePage extends StatefulWidget {
 }
 
 class _MyHomePageState extends State<MyHomePage> {
-  int _counter = 0;
+  CovidService covidService = locator<CovidService>();
 
   List<CovidCountryInfo> covidCountryInfoList;
   List<CovidCountryInfo> selectedCountries;
+
+  Future<List<CovidCountryInfo>> futureCovidCountryInfos;
   bool sort;
 
   @override
   void initState() {
     sort = false;
     selectedCountries = [];
-    covidCountryInfoList = CovidCountryInfo.getTempInfo();
+    futureCovidCountryInfos = covidService.getCovidInfoForCountries();
     super.initState();
   }
 
@@ -68,8 +73,21 @@ class _MyHomePageState extends State<MyHomePage> {
           // horizontal).
           mainAxisAlignment: MainAxisAlignment.center,
           children: <Widget>[
-            Expanded(
-              child: dataBody(),
+            FutureBuilder<List<CovidCountryInfo>>(
+              future: futureCovidCountryInfos,
+              builder: (context, snapshot) {
+                if (snapshot.hasData) {
+                  print(snapshot.data);
+                  return Expanded(
+                    child: dataBody(snapshot.data),
+                  );
+                } else if (snapshot.hasError) {
+                  return Text("${snapshot.error}");
+                }
+
+                // By default, show a loading spinner.
+                return CircularProgressIndicator();
+              },
             ),
           ],
         ),
@@ -78,97 +96,64 @@ class _MyHomePageState extends State<MyHomePage> {
     );
   }
 
-  SingleChildScrollView dataBody() {
+  SingleChildScrollView dataBody(List<CovidCountryInfo> covidVirusInfo) {
     return SingleChildScrollView(
-      scrollDirection: Axis.vertical,
-      child: DataTable(
-        columns: [
-          DataColumn(
-            label: Text("Country"),
-            numeric: false,
-            tooltip: "Country",
-          ),
-          DataColumn(
-            label: Text("All cases"),
-            numeric: true,
-            tooltip: "All cases",
-          ),
-          DataColumn(
-            label: Text("Todays cases"),
-            numeric: true,
-            tooltip: "Todays cases",
-          ),
-          DataColumn(
-            label: Text("Total deaths"),
-            numeric: true,
-            tooltip: "Total deaths",
-          ),
-          DataColumn(
-            label: Text("Todays deaths"),
-            numeric: false,
-            tooltip: "Todays deaths",
-          ),
-          DataColumn(
-            label: Text("Recovered"),
-            numeric: true,
-            tooltip: "Recovered",
-          ),
-          DataColumn(
-            label: Text("Active"),
-            numeric: true,
-            tooltip: "Active",
-          ),
-          DataColumn(
-            label: Text("Critical"),
-            numeric: true,
-            tooltip: "Critical",
-          ),
-          DataColumn(
-            label: Text("Cases per 1 million"),
-            numeric: true,
-            tooltip: "Cases per 1 million",
-          ),
-          DataColumn(
-            label: Text("Deaths per 1 million"),
-            numeric: true,
-            tooltip: "Deaths per 1 million",
-          ),
-        ],
-        rows: covidCountryInfoList
-            .map((virusCountryInfo) => DataRow(cells: [
-                  DataCell(
-                    Text(virusCountryInfo.country),
-                  ),
-                  DataCell(
-                    Text(virusCountryInfo.cases.toString()),
-                  ),
-                  DataCell(
-                    Text(virusCountryInfo.todayCases.toString()),
-                  ),
-                  DataCell(
-                    Text(virusCountryInfo.deaths.toString()),
-                  ),
-                  DataCell(
-                    Text(virusCountryInfo.todayDeaths.toString()),
-                  ),
-                  DataCell(
-                    Text(virusCountryInfo.recovered.toString()),
-                  ),
-                  DataCell(
-                    Text(virusCountryInfo.active.toString()),
-                  ),
-                  DataCell(
-                    Text(virusCountryInfo.critical.toString()),
-                  ),
-                  DataCell(
-                    Text(virusCountryInfo.casesPerOneMillion.toString()),
-                  ),
-                  DataCell(
-                    Text(virusCountryInfo.deathsPerOneMillion.toString()),
-                  ),
-                ]))
-            .toList(),
-      ),
-    );
+        scrollDirection: Axis.vertical,
+        child: PaginatedDataTable(
+            header: Text("Coronavirus is a biatch"),
+            rowsPerPage: 10,
+            columns: [
+              DataColumn(
+                label: Text("Country"),
+                numeric: false,
+                tooltip: "Country",
+              ),
+              DataColumn(
+                label: Text("All cases"),
+                numeric: true,
+                tooltip: "All cases",
+              ),
+              DataColumn(
+                label: Text("Todays cases"),
+                numeric: true,
+                tooltip: "Todays cases",
+              ),
+              DataColumn(
+                label: Text("Total deaths"),
+                numeric: true,
+                tooltip: "Total deaths",
+              ),
+              DataColumn(
+                label: Text("Todays deaths"),
+                numeric: true,
+                tooltip: "Todays deaths",
+              ),
+              DataColumn(
+                label: Text("Recovered"),
+                numeric: true,
+                tooltip: "Recovered",
+              ),
+              DataColumn(
+                label: Text("Active"),
+                numeric: true,
+                tooltip: "Active",
+              ),
+              DataColumn(
+                label: Text("Critical"),
+                numeric: true,
+                tooltip: "Critical",
+              ),
+              DataColumn(
+                label: Text("Cases per 1 million"),
+                numeric: true,
+                tooltip: "Cases per 1 million",
+              ),
+              DataColumn(
+                label: Text("Deaths per 1 million"),
+                numeric: true,
+                tooltip: "Deaths per 1 million",
+              ),
+            ],
+            source: new CovidPaginatedDataTableSource(covidVirusInfo)));
   }
 }
