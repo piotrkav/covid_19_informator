@@ -1,22 +1,15 @@
 import 'package:covid_19_informator/model/covid_paginated_data_table_source.dart';
 import 'package:covid_19_informator/service/covid_service.dart';
 import 'package:covid_19_informator/service/service_locator.dart';
-import 'package:covid_19_informator/widget/cases_line_chart.dart';
+import 'package:covid_19_informator/util/const.dart';
+import 'package:covid_19_informator/widget/covid_simple_data_widget.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 
-import 'model/covid-historical-data.dart';
 import 'model/covid-info.dart';
 
 class MyHomePage extends StatefulWidget {
   MyHomePage({Key key, this.title}) : super(key: key);
-
-  // This widget is the home page of your application. It is stateful, meaning
-  // that it has a State object (defined below) that contains fields that affect
-  // how it looks.  // This class is the configuration for the state. It holds the values (in this
-  //  // case the title) provided by the parent (in this case the App widget) and
-  //  // used by the build method of the State. Fields in a Widget subclass are
-  //  // always marked "final".
 
   final String title;
 
@@ -30,14 +23,13 @@ class _MyHomePageState extends State<MyHomePage> {
   List<CovidCountryInfo> covidCountryInfoList;
 
   Future<List<CovidCountryInfo>> futureCovidCountryInfos;
-  Future<List<CovidHistoricData>> futureCovidHistoricData;
-  bool sort;
+  List<CovidCountryInfo> covidCountryInfos;
+  CovidCountryInfo selectedCountry;
 
   @override
   void initState() {
-    sort = false;
+    selectedCountry = null;
     futureCovidCountryInfos = covidService.getCovidInfoForCountries();
-    futureCovidHistoricData = covidService.getHistoricalData();
     super.initState();
   }
 
@@ -50,78 +42,60 @@ class _MyHomePageState extends State<MyHomePage> {
     // fast, so that you can just rebuild anything that needs updating rather
     // than having to individually change instances of widgets.
     return Scaffold(
-      appBar: AppBar(
-        // Here we take the value from the MyHomePage object that was created by
-        // the App.build method, and use it to set our appbar title.
-        title: Text(widget.title),
-      ),
-      body: Center(
-        // Center is a layout widget. It takes a single child and positions it
-        // in the middle of the parent.
-        child: new Container(
-          child: new SingleChildScrollView(
-            scrollDirection: Axis.vertical,
-            child: Column(
-              // Column is also a layout widget. It takes a list of children and
-              // arranges them vertically. By default, it sizes itself to fit its
-              // children horizontally, and tries to be as tall as its parent.
-              //
-              // Invoke "debug painting" (press "p" in the console, choose the
-              // "Toggle Debug Paint" action from the Flutter Inspector in Android
-              // Studio, or the "Toggle Debug Paint" command in Visual Studio Code)
-              // to see the wireframe for each widget.
-              //
-              // Column has various properties to control how it sizes itself and
-              // how it positions its children. Here we use mainAxisAlignment to
-              // center the children vertically; the main axis here is the vertical
-              // axis because Columns are vertical (the cross axis would be
-              // horizontal).
-              mainAxisSize: MainAxisSize.min,
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: <Widget>[
-                FutureBuilder<List<CovidCountryInfo>>(
-                  future: futureCovidCountryInfos,
-                  builder: (context, snapshot) {
-                    if (snapshot.hasData) {
-                      return Flexible(
-                        child: dataBody(snapshot.data),
-                      );
-                    } else if (snapshot.hasError) {
-                      return Text("${snapshot.error}");
-                    }
-
-                    // By default, show a loading spinner.
-                    return CircularProgressIndicator();
-                  },
-                ),
-                new Container(
-                  height: 1,
-                  width: 1,
-                ),
-                FutureBuilder<List<CovidHistoricData>>(
-                  future: futureCovidHistoricData,
-                  builder: (context, snapshot) {
-                    // ignore: missing_return
-                    if (snapshot.hasData) {
-                      return Flexible(
-                        child: Container(
-                          color: Colors.white,
-                          height: 400.0,
-                          width: 800.0,
-                          child: new Padding(
-                            padding: new EdgeInsets.all(10),
-                            child: new CasesLineChart(snapshot.data.firstWhere(
-                                (element) => element.country == 'Poland')),
-                          ),
-                        ),
-                      );
-                    } else if (snapshot.hasError) {
-                      return Text("${snapshot.error}");
-                    }
-                  },
-                ),
-              ],
-            ),
+//      appBar: AppBar(
+//        backgroundColor: PrimaryColor,
+//        // Here we take the value from the MyHomePage object that was created by
+//        // the App.build method, and use it to set our appbar title.
+//        title: Text(widget.title),
+//      ),
+      body: new Container(
+        child: new SingleChildScrollView(
+          scrollDirection: Axis.vertical,
+          child: FutureBuilder<List<CovidCountryInfo>>(
+            future: futureCovidCountryInfos,
+            builder: (context, snapshot) {
+              if (snapshot.hasData) {
+                covidCountryInfos = snapshot.data;
+                selectedCountry = snapshot.data
+                    .firstWhere((element) => element.country == 'Poland');
+                if (selectedCountry == null) {
+                  selectedCountry = covidCountryInfos.first;
+                }
+                return CovidSimpleDataWidget(
+                  countries: snapshot.data,
+                  selectedCountry: selectedCountry,
+                );
+              } else if (snapshot.hasError) {
+                print(snapshot.error);
+                return Container(
+                    child: Center(child: Text("${snapshot.error}")));
+              } else {
+                print("No data yet");
+                List<Widget> children;
+                children = <Widget>[
+                  SizedBox(
+                    child: CircularProgressIndicator(),
+                    width: 60,
+                    height: 60,
+                  ),
+                  const Padding(
+                    padding: EdgeInsets.only(top: 16),
+                    child: Text('Awaiting result...'),
+                  )
+                ];
+                return Center(
+                  child: Padding(
+                    padding: EdgeInsets.symmetric(vertical: 200),
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      crossAxisAlignment: CrossAxisAlignment.center,
+                      children: children,
+                    ),
+                  ),
+                );
+              }
+              // By default, show a loading spinner.
+            },
           ),
         ),
       ),
@@ -188,5 +162,70 @@ class _MyHomePageState extends State<MyHomePage> {
               ),
             ],
             source: new CovidPaginatedDataTableSource(covidVirusInfo)));
+  }
+}
+
+class DataCounter extends StatelessWidget {
+  final int numberOf;
+  final Color colorOf;
+  final String title;
+
+  const DataCounter({
+    Key key,
+    this.numberOf,
+    this.colorOf,
+    this.title,
+  }) : super(key: key);
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      children: <Widget>[
+        Container(
+          padding: EdgeInsets.all(4),
+          height: 25,
+          width: 25,
+          decoration: BoxDecoration(
+            shape: BoxShape.circle,
+            color: colorOf.withOpacity(0.25),
+          ),
+          child: Container(
+            decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                color: Colors.transparent,
+                border: Border.all(width: 2, color: colorOf)),
+          ),
+        ),
+        SizedBox(
+          height: 10,
+        ),
+        Text(
+          "$numberOf",
+          style: TextStyle(fontSize: 24, color: colorOf),
+        ),
+        Text(
+          "$title",
+          style: SubTextStyle,
+        )
+      ],
+    );
+  }
+}
+
+class BottomClipper extends CustomClipper<Path> {
+  @override
+  Path getClip(Size size) {
+    var path = new Path();
+    path.lineTo(0, size.height - 80);
+    path.quadraticBezierTo(
+        size.width / 2, size.height, size.width, size.height - 80);
+    path.lineTo(size.width, 0);
+    path.close();
+    return path;
+  }
+
+  @override
+  bool shouldReclip(CustomClipper<Path> oldClipper) {
+    return false;
   }
 }

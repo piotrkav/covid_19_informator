@@ -40,8 +40,8 @@ class CovidCountryInfo {
     recovered = json['recovered'];
     active = json['active'];
     critical = json['critical'];
-    casesPerOneMillion = json['casesPerOneMillion'];
-    deathsPerOneMillion = json['deathsPerOneMillion'];
+    casesPerOneMillion = json['casesPerOneMillion'].toDouble();
+    deathsPerOneMillion = json['deathsPerOneMillion'].toDouble();
     updated = json['updated'];
   }
 
@@ -79,8 +79,8 @@ class CountryInfo {
     iId = json['_id'];
     iso2 = json['iso2'];
     iso3 = json['iso3'];
-    lat = json['lat'];
-    long = json['long'];
+    lat = json['lat'].toDouble();
+    long = json['long'].toDouble();
     flag = json['flag'];
   }
 

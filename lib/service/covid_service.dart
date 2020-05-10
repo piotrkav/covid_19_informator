@@ -11,6 +11,7 @@ class CovidService {
     if (response.statusCode == 200) {
       try {
         Iterable list = json.decode(response.body);
+        print(list);
         var countriesInfo =
             list.map((model) => CovidCountryInfo.fromJson(model)).toList();
         return countriesInfo;
